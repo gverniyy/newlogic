@@ -1,45 +1,57 @@
 // src/models/User.ts
+import { pool } from '../db';
 
 export interface User {
-    id: number;
-    email: string;
-    password: string; // хэшированный пароль
-    createdAt: Date;
+  id: number;
+  email: string;
+  password: string;
+  created_at: Date;
+  digital_activated?: boolean;
+  name?: string;
+}
+
+export class UserStore {
+  // Пример существующих методов (findByEmail, create, updatePassword) и т.д.
+
+  static async findByEmail(email: string): Promise<User | null> {
+    const res = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    return res.rows.length > 0 ? (res.rows[0] as User) : null;
   }
-  
-  export class UserStore {
-    private static users: User[] = [];
-    private static idCounter = 1;
-  
-    static findByEmail(email: string): User | undefined {
-      return this.users.find(u => u.email === email);
-    }
-  
-    static create(email: string, password: string): User {
-      const newUser: User = {
-        id: this.idCounter++,
-        email,
-        password,
-        createdAt: new Date(),
-      };
-      this.users.push(newUser);
-      return newUser;
-    }
-  
-    static updatePassword(email: string, newPassword: string): boolean {
-      const user = this.findByEmail(email);
-      if (!user) return false;
-      user.password = newPassword;
-      return true;
+
+  static async create(email: string, password: string): Promise<User | null> {
+    try {
+      const res = await pool.query(
+        'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *',
+        [email, password]
+      );
+      return res.rows[0] as User;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      return null;
     }
   }
 
-  // src/routes/activationRoutes.ts
-import { Router } from 'express';
-import { ActivationController } from '../controllers/activationController';
+  static async updatePassword(email: string, newPassword: string): Promise<boolean> {
+    try {
+      const res = await pool.query('UPDATE users SET password = $1 WHERE email = $2', [newPassword, email]);
+      return res.rowCount > 0;
+    } catch (error) {
+      console.error('Error updating password:', error);
+      return false;
+    }
+  }
 
-const router = Router();
-
-router.post('/activation', ActivationController.activateProduct);
-
-export default router;
+  // Новый метод для активации цифрового продукта:
+  static async activateDigitalProduct(email: string, name: string): Promise<boolean> {
+    try {
+      const res = await pool.query(
+        'UPDATE users SET digital_activated = true, name = $1 WHERE email = $2',
+        [name, email]
+      );
+      return res.rowCount > 0;
+    } catch (error) {
+      console.error('Error activating digital product for user:', error);
+      return false;
+    }
+  }
+}
