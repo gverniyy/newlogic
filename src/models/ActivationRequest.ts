@@ -1,4 +1,3 @@
-// src/models/ActivationRequest.ts
 import { pool } from '../db';
 
 export interface ActivationRequest {
@@ -44,7 +43,7 @@ export class ActivationRequestStore {
   static async delete(id: number): Promise<boolean> {
     try {
       const res = await pool.query('DELETE FROM activation_requests WHERE id = $1', [id]);
-      return res.rowCount > 0;
+      return (res.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error deleting activation request:', error);
       return false;
