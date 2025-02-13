@@ -1,17 +1,18 @@
-// src/app.ts
-
 import express from 'express';
+import cors from 'cors';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+// Разрешаем CORS для всех источников (или настройте, если нужно ограничить)
+app.use(cors());
 
+app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 
 app.listen(PORT, () => {

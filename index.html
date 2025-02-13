@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Тестирование Auth API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      background: #fff;
+      padding: 15px;
+      margin: 20px auto;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0 10px 0;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #007bff;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .response {
+      background: #eef;
+      border: 1px solid #ccd;
+      padding: 10px;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Тестирование API (se.privacylayer.io:3000)</h1>
+
+  <!-- Регистрация -->
+  <div class="container section">
+    <h2>Регистрация</h2>
+    <!-- Шаг 1: Отправка кода регистрации -->
+    <h3>Шаг 1: Отправить код регистрации</h3>
+    <input type="email" id="regEmail" placeholder="Введите email" required>
+    <button onclick="sendRegistrationCode()">Отправить код регистрации</button>
+    <div id="regResponse1" class="response"></div>
+
+    <!-- Шаг 2: Подтверждение кода и регистрация -->
+    <h3>Шаг 2: Подтвердить код и зарегистрироваться</h3>
+    <input type="email" id="regEmailVerify" placeholder="Введите email" required>
+    <input type="text" id="regCode" placeholder="Введите 4-значный код" required>
+    <input type="password" id="regPassword" placeholder="Введите пароль" required>
+    <button onclick="verifyRegistrationCode()">Зарегистрироваться</button>
+    <div id="regResponse2" class="response"></div>
+  </div>
+
+  <!-- Авторизация -->
+  <div class="container section">
+    <h2>Вход</h2>
+    <input type="email" id="loginEmail" placeholder="Введите email" required>
+    <input type="password" id="loginPassword" placeholder="Введите пароль" required>
+    <label>
+      <input type="checkbox" id="rememberMe"> Запомнить меня (90 дней)
+    </label>
+    <button onclick="login()">Войти</button>
+    <div id="loginResponse" class="response"></div>
+  </div>
+
+  <!-- Восстановление пароля -->
+  <div class="container section">
+    <h2>Восстановление пароля</h2>
+    <!-- Шаг 1: Отправка кода восстановления -->
+    <h3>Шаг 1: Отправить код восстановления</h3>
+    <input type="email" id="resetEmail" placeholder="Введите email" required>
+    <button onclick="sendPasswordResetCode()">Отправить код восстановления</button>
+    <div id="resetResponse1" class="response"></div>
+
+    <!-- Шаг 2: Сброс пароля -->
+    <h3>Шаг 2: Сбросить пароль</h3>
+    <input type="email" id="resetEmailVerify" placeholder="Введите email" required>
+    <input type="text" id="resetCode" placeholder="Введите 4-значный код" required>
+    <input type="password" id="newPassword" placeholder="Введите новый пароль" required>
+    <button onclick="resetPassword()">Сбросить пароль</button>
+    <div id="resetResponse2" class="response"></div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3000';
+
+    async function handleResponse(response) {
+      const text = await response.text();
+      try {
+        return JSON.stringify(JSON.parse(text), null, 2);
+      } catch (e) {
+        return text;
+      }
+    }
+
+    // Регистрация: отправка кода
+    async function sendRegistrationCode() {
+      const email = document.getElementById('regEmail').value;
+      const responseDiv = document.getElementById('regResponse1');
+      responseDiv.textContent = 'Отправка запроса...';
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-registration-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      responseDiv.textContent = await handleResponse(res);
+    }
+
+    // Регистрация: проверка кода и регистрация
+    async function verifyRegistrationCode() {
+      const email = document.getElementById('regEmailVerify').value;
+      const code = document.getElementById('regCode').value;
+      const password = document.getElementById('regPassword').value;
+      const responseDiv = document.getElementById('regResponse2');
+      responseDiv.textContent = 'Отправка запроса...';
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-registration-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, password })
+      });
+      responseDiv.textContent = await handleResponse(res);
+    }
+
+    // Авторизация
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const rememberMe = document.getElementById('rememberMe').checked;
+      const responseDiv = document.getElementById('loginResponse');
+      responseDiv.textContent = 'Отправка запроса...';
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, rememberMe })
+      });
+      responseDiv.textContent = await handleResponse(res);
+    }
+
+    // Восстановление пароля: отправка кода
+    async function sendPasswordResetCode() {
+      const email = document.getElementById('resetEmail').value;
+      const responseDiv = document.getElementById('resetResponse1');
+      responseDiv.textContent = 'Отправка запроса...';
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-password-reset-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      responseDiv.textContent = await handleResponse(res);
+    }
+
+    // Восстановление пароля: сброс пароля
+    async function resetPassword() {
+      const email = document.getElementById('resetEmailVerify').value;
+      const code = document.getElementById('resetCode').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const responseDiv = document.getElementById('resetResponse2');
+      responseDiv.textContent = 'Отправка запроса...';
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, newPassword })
+      });
+      responseDiv.textContent = await handleResponse(res);
+    }
+  </script>
+</body>
+</html>
